@@ -152,7 +152,7 @@ export default function CustomerOrder() {
                 <CardHeader>
                   <CardTitle className="text-lg">{item.name}</CardTitle>
                   <CardDescription className="text-xl font-bold text-primary">
-                    ${item.price.toFixed(2)}
+                    ₹{item.price.toFixed(2)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -208,7 +208,7 @@ export default function CustomerOrder() {
                           </Button>
                         </div>
                         <span className="text-sm font-medium w-16 text-right">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toFixed(2)}
                         </span>
                       </div>
                     ))}

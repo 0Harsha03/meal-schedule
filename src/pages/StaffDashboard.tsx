@@ -184,7 +184,7 @@ export default function StaffDashboard() {
 
                 <div className="flex justify-between items-center pt-2 border-t">
                   <div className="space-y-1">
-                    <p className="text-lg font-bold text-primary">${order.total_amount.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-primary">₹{order.total_amount.toFixed(2)}</p>
                     {order.byoc_discount && (
                       <div className="flex items-center gap-1 text-xs text-secondary">
                         <Leaf className="h-3 w-3" />

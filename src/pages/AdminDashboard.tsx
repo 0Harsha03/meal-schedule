@@ -143,7 +143,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">Price ($)</Label>
+                <Label htmlFor="price">Price (₹)</Label>
                 <Input
                   id="price"
                   type="number"
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex justify-between items-start">
                 <span>{item.name}</span>
-                <span className="text-primary">${item.price.toFixed(2)}</span>
+                <span className="text-primary">₹{item.price.toFixed(2)}</span>
               </CardTitle>
               <CardDescription>
                 {item.is_available ? (
