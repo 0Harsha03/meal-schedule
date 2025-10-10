@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           id: string
           is_available: boolean
+          meal_type: Database["public"]["Enums"]["meal_type"]
           name: string
           price: number
           updated_at: string
@@ -29,6 +30,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_available?: boolean
+          meal_type?: Database["public"]["Enums"]["meal_type"]
           name: string
           price: number
           updated_at?: string
@@ -38,6 +40,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_available?: boolean
+          meal_type?: Database["public"]["Enums"]["meal_type"]
           name?: string
           price?: number
           updated_at?: string
@@ -189,6 +192,7 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "staff" | "admin"
+      meal_type: "breakfast" | "lunch" | "snacks" | "dinner" | "all_day"
       order_status: "pending" | "preparing" | "ready" | "completed"
     }
     CompositeTypes: {
@@ -318,6 +322,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "staff", "admin"],
+      meal_type: ["breakfast", "lunch", "snacks", "dinner", "all_day"],
       order_status: ["pending", "preparing", "ready", "completed"],
     },
   },

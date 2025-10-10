@@ -6,9 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SalesAnalytics } from "@/components/SalesAnalytics";
+import { getMealTypeLabel, type MealType } from "@/lib/mealTimes";
+import { menuItemSchema } from "@/lib/validations";
 
 interface MenuItem {
   id: string;
@@ -16,6 +21,7 @@ interface MenuItem {
   price: number;
   is_available: boolean;
   allergy_labels: string | null;
+  meal_type: MealType;
 }
 
 export default function AdminDashboard() {
@@ -27,7 +33,9 @@ export default function AdminDashboard() {
     price: "",
     is_available: true,
     allergy_labels: "",
+    meal_type: "all_day" as MealType,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,19 +57,36 @@ export default function AdminDashboard() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", price: "", is_available: true, allergy_labels: "" });
+    setFormData({ name: "", price: "", is_available: true, allergy_labels: "", meal_type: "all_day" });
     setEditingItem(null);
+    setErrors({});
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
 
-    const itemData = {
+    // Validate with Zod
+    const validation = menuItemSchema.safeParse({
       name: formData.name,
       price: parseFloat(formData.price),
       is_available: formData.is_available,
       allergy_labels: formData.allergy_labels || null,
-    };
+      meal_type: formData.meal_type,
+    });
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.issues.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0].toString()] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    const itemData = validation.data;
 
     try {
       if (editingItem) {
@@ -93,6 +118,7 @@ export default function AdminDashboard() {
       price: item.price.toString(),
       is_available: item.is_available,
       allergy_labels: item.allergy_labels || "",
+      meal_type: item.meal_type,
     });
     setDialogOpen(true);
   };
@@ -115,9 +141,22 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="container mx-auto max-w-6xl py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Menu Management</h1>
+    <div className="container mx-auto max-w-7xl py-8 px-4">
+      <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
+
+      <Tabs defaultValue="analytics" className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="menu">Menu Management</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="analytics">
+          <SalesAnalytics />
+        </TabsContent>
+
+        <TabsContent value="menu">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold">Menu Items</h2>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button>
@@ -153,6 +192,25 @@ export default function AdminDashboard() {
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   required
                 />
+                {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="meal_type">Meal Type</Label>
+                <Select
+                  value={formData.meal_type}
+                  onValueChange={(value: MealType) => setFormData({ ...formData, meal_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="breakfast">{getMealTypeLabel("breakfast")}</SelectItem>
+                    <SelectItem value="lunch">{getMealTypeLabel("lunch")}</SelectItem>
+                    <SelectItem value="snacks">{getMealTypeLabel("snacks")}</SelectItem>
+                    <SelectItem value="dinner">{getMealTypeLabel("dinner")}</SelectItem>
+                    <SelectItem value="all_day">{getMealTypeLabel("all_day")}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="allergy">Allergy Labels (optional)</Label>
@@ -162,6 +220,7 @@ export default function AdminDashboard() {
                   value={formData.allergy_labels}
                   onChange={(e) => setFormData({ ...formData, allergy_labels: e.target.value })}
                 />
+                {errors.allergy_labels && <p className="text-sm text-destructive">{errors.allergy_labels}</p>}
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
@@ -187,12 +246,17 @@ export default function AdminDashboard() {
                 <span>{item.name}</span>
                 <span className="text-primary">₹{item.price.toFixed(2)}</span>
               </CardTitle>
-              <CardDescription>
-                {item.is_available ? (
-                  <span className="text-secondary font-medium">Available</span>
-                ) : (
-                  <span className="text-destructive font-medium">Unavailable</span>
-                )}
+              <CardDescription className="space-y-1">
+                <div>
+                  {item.is_available ? (
+                    <span className="text-secondary font-medium">Available</span>
+                  ) : (
+                    <span className="text-destructive font-medium">Unavailable</span>
+                  )}
+                </div>
+                <div className="text-xs">
+                  {getMealTypeLabel(item.meal_type)}
+                </div>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -213,8 +277,10 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

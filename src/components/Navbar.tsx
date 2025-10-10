@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { UtensilsCrossed, LogOut, ShoppingBag, Users, Settings } from "lucide-react";
+import { UtensilsCrossed, LogOut, ShoppingBag, Users, Settings, Receipt } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
@@ -20,10 +20,16 @@ export const Navbar = () => {
         {user && (
           <div className="flex items-center gap-4">
             {userRole === "customer" && (
-              <Button variant="ghost" onClick={() => navigate("/order")}>
-                <ShoppingBag className="h-4 w-4 mr-2" />
-                Order
-              </Button>
+              <>
+                <Button variant="ghost" onClick={() => navigate("/order")}>
+                  <ShoppingBag className="h-4 w-4 mr-2" />
+                  Order
+                </Button>
+                <Button variant="ghost" onClick={() => navigate("/my-orders")}>
+                  <Receipt className="h-4 w-4 mr-2" />
+                  My Orders
+                </Button>
+              </>
             )}
             {userRole === "staff" && (
               <Button variant="ghost" onClick={() => navigate("/staff")}>

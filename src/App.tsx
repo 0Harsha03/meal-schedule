@@ -9,6 +9,7 @@ import { Navbar } from "@/components/Navbar";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CustomerOrder from "./pages/CustomerOrder";
+import MyOrders from "./pages/MyOrders";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -31,6 +32,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["customer"]}>
                   <CustomerOrder />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-orders"
+              element={
+                <ProtectedRoute allowedRoles={["customer"]}>
+                  <MyOrders />
                 </ProtectedRoute>
               }
             />

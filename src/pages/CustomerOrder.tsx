@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingCart, Minus, Plus, Clock, Leaf, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getMealTypeIcon, type MealType } from "@/lib/mealTimes";
 
 interface MenuItem {
   id: string;
@@ -16,6 +17,7 @@ interface MenuItem {
   price: number;
   is_available: boolean;
   allergy_labels: string | null;
+  meal_type: MealType;
 }
 
 interface CartItem extends MenuItem {
@@ -124,7 +126,7 @@ export default function CustomerOrder() {
 
       toast({
         title: "Order placed!",
-        description: `Your order total is $${total}. We'll have it ready at ${new Date(pickupTime).toLocaleTimeString()}.`,
+        description: `Your order total is ₹${total}. We'll have it ready at ${new Date(pickupTime).toLocaleTimeString()}.`,
       });
 
       setCart([]);
@@ -153,6 +155,11 @@ export default function CustomerOrder() {
                   <CardTitle className="text-lg">{item.name}</CardTitle>
                   <CardDescription className="text-xl font-bold text-primary">
                     ₹{item.price.toFixed(2)}
+                    {item.meal_type !== "all_day" && (
+                      <Badge variant="outline" className="ml-2">
+                        {getMealTypeIcon(item.meal_type)} {item.meal_type}
+                      </Badge>
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -242,7 +249,7 @@ export default function CustomerOrder() {
 
                     <div className="flex justify-between text-lg font-bold pt-2">
                       <span>Total:</span>
-                      <span className="text-primary">${calculateTotal()}</span>
+                      <span className="text-primary">₹{calculateTotal()}</span>
                     </div>
 
                     <Button onClick={handleCheckout} className="w-full" size="lg">
