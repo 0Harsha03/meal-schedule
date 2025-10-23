@@ -29,6 +29,7 @@ export default function CustomerOrder() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [pickupTime, setPickupTime] = useState("");
   const [byoc, setByoc] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -96,9 +97,12 @@ export default function CustomerOrder() {
       return;
     }
 
+    setProcessing(true);
+
     try {
       const total = parseFloat(calculateTotal());
 
+      // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -107,12 +111,14 @@ export default function CustomerOrder() {
           pickup_time: new Date(pickupTime).toISOString(),
           byoc_discount: byoc,
           status: "pending",
+          payment_status: "pending",
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
+      // Create order items
       const orderItems = cart.map((item) => ({
         order_id: order.id,
         menu_item_id: item.id,
@@ -124,20 +130,36 @@ export default function CustomerOrder() {
 
       if (itemsError) throw itemsError;
 
-      toast({
-        title: "Order placed!",
-        description: `Your order total is ₹${total}. We'll have it ready at ${new Date(pickupTime).toLocaleTimeString()}.`,
+      // Create Stripe checkout session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { orderId: order.id },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
-      setCart([]);
-      setPickupTime("");
-      setByoc(false);
+      if (error) throw error;
+
+      // Redirect to Stripe checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL received");
+      }
     } catch (error: any) {
+      console.error("Checkout error:", error);
       toast({
-        title: "Order failed",
-        description: error.message,
+        title: "Checkout failed",
+        description: error.message || "Failed to initiate payment",
         variant: "destructive",
       });
+      setProcessing(false);
     }
   };
 
@@ -252,8 +274,8 @@ export default function CustomerOrder() {
                       <span className="text-primary">₹{calculateTotal()}</span>
                     </div>
 
-                    <Button onClick={handleCheckout} className="w-full" size="lg">
-                      Pay Now
+                    <Button onClick={handleCheckout} className="w-full" size="lg" disabled={processing}>
+                      {processing ? "Processing..." : "Pay Now"}
                     </Button>
                   </div>
                 </>

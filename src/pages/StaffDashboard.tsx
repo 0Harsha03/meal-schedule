@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, User, Package, CheckCircle, Leaf } from "lucide-react";
+import { Clock, User, Package, CheckCircle, Leaf, CreditCard } from "lucide-react";
 
 interface Order {
   id: string;
@@ -13,6 +13,7 @@ interface Order {
   pickup_time: string;
   byoc_discount: boolean;
   status: "pending" | "preparing" | "ready" | "completed";
+  payment_status: string;
   created_at: string;
   profiles: {
     full_name: string | null;
@@ -138,6 +139,16 @@ export default function StaffDashboard() {
     return actions[status] || "Update";
   };
 
+  const getPaymentStatusColor = (paymentStatus: string) => {
+    const colors: Record<string, string> = {
+      paid: "bg-green-500",
+      pending: "bg-yellow-500",
+      failed: "bg-red-500",
+      refunded: "bg-gray-500",
+    };
+    return colors[paymentStatus] || "bg-gray-500";
+  };
+
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4">
       <h1 className="mb-8 text-4xl font-bold">Order Management</h1>
@@ -156,7 +167,16 @@ export default function StaffDashboard() {
               <CardHeader>
                 <div className="flex justify-between items-start mb-2">
                   <CardTitle className="text-lg">Order #{order.id.slice(0, 8)}</CardTitle>
-                  <Badge className={getStatusColor(order.status)}>{getStatusLabel(order.status)}</Badge>
+                  <div className="flex flex-col gap-1 items-end">
+                    <Badge className={getStatusColor(order.status)}>{getStatusLabel(order.status)}</Badge>
+                    <Badge 
+                      variant="outline" 
+                      className={`${getPaymentStatusColor(order.payment_status)} text-white flex items-center gap-1 text-xs`}
+                    >
+                      <CreditCard className="h-3 w-3" />
+                      {order.payment_status || 'pending'}
+                    </Badge>
+                  </div>
                 </div>
                 <CardDescription className="space-y-1">
                   <div className="flex items-center gap-2 text-foreground font-medium">

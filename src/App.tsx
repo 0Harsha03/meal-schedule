@@ -12,6 +12,7 @@ import CustomerOrder from "./pages/CustomerOrder";
 import MyOrders from "./pages/MyOrders";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <ProtectedRoute allowedRoles={["customer"]}>
+                  <PaymentSuccess />
                 </ProtectedRoute>
               }
             />

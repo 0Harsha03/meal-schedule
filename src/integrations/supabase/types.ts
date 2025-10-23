@@ -95,8 +95,11 @@ export type Database = {
           created_at: string
           customer_id: string
           id: string
+          payment_status: string | null
           pickup_time: string
           status: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           total_amount: number
         }
         Insert: {
@@ -104,8 +107,11 @@ export type Database = {
           created_at?: string
           customer_id: string
           id?: string
+          payment_status?: string | null
           pickup_time: string
           status?: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           total_amount: number
         }
         Update: {
@@ -113,8 +119,11 @@ export type Database = {
           created_at?: string
           customer_id?: string
           id?: string
+          payment_status?: string | null
           pickup_time?: string
           status?: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           total_amount?: number
         }
         Relationships: [
