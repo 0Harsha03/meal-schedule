@@ -12,6 +12,7 @@ import { Pencil, Trash2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesAnalytics } from "@/components/SalesAnalytics";
+import { UserManagement } from "@/components/UserManagement";
 import { getMealTypeLabel, type MealType } from "@/lib/mealTimes";
 import { menuItemSchema } from "@/lib/validations";
 
@@ -145,9 +146,10 @@ export default function AdminDashboard() {
       <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
 
       <Tabs defaultValue="analytics" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="menu">Menu Management</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics">
@@ -279,6 +281,10 @@ export default function AdminDashboard() {
           </Card>
           ))}
         </div>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserManagement />
         </TabsContent>
       </Tabs>
     </div>
