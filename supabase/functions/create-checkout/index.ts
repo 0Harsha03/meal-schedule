@@ -13,34 +13,25 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')!;
-    
+    const authHeader = req.headers.get('Authorization') ?? '';
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
+      { global: { headers: { Authorization: authHeader } } }
     );
 
     const { data } = await supabaseClient.auth.getUser();
-    const user = data.user;
-    
+    const user = data?.user;
+
     if (!user?.email) {
-      throw new Error('User not authenticated or email not available');
+      throw new Error('User not authenticated or email missing');
     }
 
     const { orderId } = await req.json();
-    
-    if (!orderId) {
-      throw new Error('Order ID is required');
-    }
+    if (!orderId) throw new Error('Order ID required');
 
-    console.log(`Creating checkout for order: ${orderId}`);
+    console.log(`🔹 Creating checkout for order: ${orderId}`);
 
-    // Fetch order details
     const { data: order, error: orderError } = await supabaseClient
       .from('orders')
       .select(`
@@ -55,39 +46,28 @@ serve(async (req) => {
       .eq('id', orderId)
       .single();
 
-    if (orderError || !order) {
-      throw new Error('Order not found');
-    }
+    if (orderError || !order) throw new Error('Order not found');
+    if (order.customer_id !== user.id) throw new Error('Unauthorized order access');
 
-    // Verify order belongs to user
-    if (order.customer_id !== user.id) {
-      throw new Error('Unauthorized access to order');
-    }
+    const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeSecret) throw new Error('Stripe secret key not set in environment');
 
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-      apiVersion: '2025-08-27.basil',
+    const stripe = new Stripe(stripeSecret, {
+      apiVersion: '2024-04-10',
     });
 
-    // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    }
+    const customerId = customers.data.length ? customers.data[0].id : undefined;
 
-    // Create line items from order
     const lineItems = order.order_items.map((item: any) => ({
       price_data: {
         currency: 'inr',
-        product_data: {
-          name: item.menu_items.name,
-        },
-        unit_amount: Math.round(item.price_at_time * 100), // Convert to paise
+        product_data: { name: item.menu_items.name },
+        unit_amount: Math.round(item.price_at_time * 100),
       },
       quantity: item.quantity,
     }));
 
-    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -95,36 +75,26 @@ serve(async (req) => {
       mode: 'payment',
       success_url: `${req.headers.get('origin')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get('origin')}/order?canceled=true`,
-      metadata: {
-        orderId: orderId,
-        userId: user.id,
-      },
+      metadata: { orderId, userId: user.id },
     });
 
-    // Update order with stripe session id
-    await supabaseClient
-      .from('orders')
+    await supabaseClient.from('orders')
       .update({ stripe_session_id: session.id })
       .eq('id', orderId);
 
-    console.log(`Checkout session created: ${session.id}`);
+    console.log(`✅ Checkout session created: ${session.id}`);
 
     return new Response(
       JSON.stringify({ url: session.url, sessionId: session.id }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
-    console.error('Error in create-checkout:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+
+  } catch (err) {
+    console.error('❌ Stripe checkout error:', err);
+    const msg = err instanceof Error ? err.message : 'Unknown error occurred';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      JSON.stringify({ error: msg }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
