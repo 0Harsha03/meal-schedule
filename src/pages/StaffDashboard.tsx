@@ -60,7 +60,7 @@ export default function StaffDashboard() {
       .select(
         `
         *,
-        profiles!orders_customer_id_fkey (
+        profiles (
           full_name,
           email
         ),
@@ -76,13 +76,15 @@ export default function StaffDashboard() {
       .order("pickup_time", { ascending: true });
 
     if (error) {
+      console.error("Error fetching orders:", error);
       toast({
         title: "Error",
         description: "Failed to load orders",
         variant: "destructive",
       });
+      setOrders([]);
     } else {
-      setOrders(data as any || []);
+      setOrders(data || []);
     }
   };
 

@@ -137,21 +137,24 @@ export default function CustomerOrder() {
         throw new Error("Not authenticated");
       }
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
         body: { orderId: order.id },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
 
-      if (error) throw error;
+      if (checkoutError) {
+        console.error("Checkout error:", checkoutError);
+        throw new Error(checkoutError.message || "Failed to create checkout session");
+      }
+
+      if (!checkoutData?.url) {
+        throw new Error("No checkout URL received from payment provider");
+      }
 
       // Redirect to Stripe checkout
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No checkout URL received");
-      }
+      window.location.href = checkoutData.url;
     } catch (error: any) {
       console.error("Checkout error:", error);
       toast({
