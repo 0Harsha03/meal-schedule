@@ -18,7 +18,7 @@ interface Order {
   profiles: {
     full_name: string | null;
     email: string;
-  };
+  } | null;
   order_items: {
     quantity: number;
     menu_items: {
@@ -183,7 +183,7 @@ export default function StaffDashboard() {
                 <CardDescription className="space-y-1">
                   <div className="flex items-center gap-2 text-foreground font-medium">
                     <User className="h-4 w-4" />
-                    {order.profiles.full_name || order.profiles.email}
+                    {order.profiles?.full_name || order.profiles?.email || "Unknown Customer"}
                   </div>
                   <div className="flex items-center gap-2 text-primary font-semibold">
                     <Clock className="h-4 w-4" />
